@@ -1,0 +1,1 @@
+alias <%= @project_name_camel_case %>.{Worker,Api}

@@ -9,15 +9,19 @@ defmodule GenTemplateApiClient.Mixfile do
     { :ex_doc,         ">0.0.0",  only: [:dev, :test] },
   ]
 
-  @maintainers ["Your Name <youe@example.com>"]
-  @github      "https://github.com/•••/#{@name}"
+  @maintainers ["Andrew Forward <aforward@gmail.com>"]
+  @github      "https://github.com/aforward/#{@name}"
 
   @description """
-  What your template does (less than 300 characters)
+  A template for building API clients to 3rd party REST applications.
+
+  This will generate templates for get, post functions.  You then
+  extend the project with convenience functions to access the API
+  like it were just another Elixir API.
   """
-  
+
   # ------------------------------------------------------------
-  
+
   def project do
     in_production = Mix.env == :prod
     [
@@ -44,5 +48,5 @@ defmodule GenTemplateApiClient.Mixfile do
 #      extra:       %{ "type" => "a_template_for_mix_gen" },
     ]
   end
-  
+
 end
