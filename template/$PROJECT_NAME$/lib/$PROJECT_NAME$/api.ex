@@ -1,79 +1,82 @@
 defmodule <%= @project_name_camel_case %>.Api do
-
-  alias <%= @project_name_camel_case %>.Api
-
-  @doc"""
-  Post a message to the <%= @project_name_camel_case %> API by
-  providing all the necessary information.  The answer will be
-
-    If successful
-    {status_code, body}
-
-    Under error
-    {:error, reason}
+  @moduledoc"""
+  Make generic HTTP calls a web service.  Please
+  update (or remove) the tests to a sample service
+  in the examples below.
   """
-  def post(url, body, configs) when is_map(body) and is_map(configs) do
-    post(url, encode_body(body), headers(configs))
-  end
-  def post(url, body, headers) do
-    case HTTPoison.post(url, body, headers) do
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-        {status_code, Poison.decode!(body)}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
-    end
-  end
 
   @doc"""
-  Send a GET message to the <%= @project_name_camel_case %> API by
-  providing all the necessary information.  The answer will be
-
-    If successful
-    {status_code, body}
-
-    Under error
-    {:error, reason}
-  """
-  def get(url, configs) when is_map(configs) do
-    get(url, headers(configs))
-  end
-  def get(url, headers) do
-    case HTTPoison.get(url, headers) do
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-        {status_code, Poison.decode!(body)}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, reason}
-    end
-  end
-
-  @doc"""
-  Build the headers for your API
+  Retrieve data from the API using either :get or :post
 
   ## Examples
 
-      iex> <%= @project_name_camel_case %>.Api.headers(%{content_type: "application/json", bearer: "abc123"})
-      [{"Authorization", "Bearer abc123"}, {"Content-Type", "application/json"}]
+      iex> <%= @project_name_camel_case %>.Api.call(:get, %{source: "https://raw.githubusercontent.com/aforward/webfiles/master/x.txt"})
+      {:ok, "A text file\\n"}
 
-      iex> <%= @project_name_camel_case %>.Api.headers(%{bearer: "abc123"})
-      [{"Authorization", "Bearer abc123"}, {"Content-Type", "application/x-www-form-urlencoded"}]
+      iex> <%= @project_name_camel_case %>.Api.call(:post, %{source: "https://raw.githubusercontent.com/aforward/webfiles/master/x.txt"})
+      {:error, "Expected a 200, received 400"}
+  """
+  def call(:get, %{source: source, headers: headers}), do: get(source, headers)
+  def call(:get, %{source: source}), do: get(source)
+  def call(:post, %{source: source, body: body, headers: headers}), do: post(source, body, headers)
+  def call(:post, %{source: source, body: body}), do: post(source, body)
+  def call(:post, %{source: source}), do: post(source)
 
-      iex> <%= @project_name_camel_case %>.Api.headers(%{})
-      [{"Content-Type", "application/x-www-form-urlencoded"}]
+  @doc"""
+  Make an API call using GET.  Optionally provide any required headers
 
-      iex> <%= @project_name_camel_case %>.Api.headers()
-      [{"Content-Type", "application/x-www-form-urlencoded"}]
+  ## Examples
+
+      iex> <%= @project_name_camel_case %>.Api.get("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt")
+      {:ok, "A text file\\n"}
+
+      iex> <%= @project_name_camel_case %>.Api.get("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt", %{content_type: "text/html"})
+      {:ok, "A text file\\n"}
+
+      iex> <%= @project_name_camel_case %>.Api.get("https://raw.githubusercontent.com/aforward/webfiles/master/missing.txt")
+      {:error, "Expected a 200, received 404"}
+
+      iex> <%= @project_name_camel_case %>.Api.get("http://localhost:1")
+      {:error, :econnrefused}
 
   """
-  def headers(), do: headers(%{})
-  def headers(nil), do: headers(%{})
-  def headers(data) do
-    h = %{content_type: "application/x-www-form-urlencoded"}
-    |> Map.merge(reject_nil(data))
-    |> Enum.map(&header/1)
+  def get(source), do: get(source, nil)
+  def get(source, headers) do
+    source
+    |> HTTPoison.get(encode_headers(headers))
+    |> parse
   end
-  defp header({:bearer, bearer}), do: {"Authorization", "Bearer #{bearer}"}
-  defp header({:content_type, content_type}), do: {"Content-Type", content_type}
 
+  @doc"""
+  Make an API call using POST.  Optionally provide any required data and headers
+
+  Sorry, the examples suck and only show the :error case.
+
+  ## Examples
+
+      iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt")
+      {:error, "Expected a 200, received 400"}
+
+      iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt", %{a: "b"})
+      {:error, "Expected a 200, received 400"}
+
+      iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt", %{}, %{body_type: "application/json"})
+      {:error, "Expected a 200, received 400"}
+
+      iex> <%= @project_name_camel_case %>.Api.post("http://localhost:1")
+      {:error, :econnrefused}
+
+  """
+  def post(source), do: post(source, %{}, %{})
+  def post(source, body), do: post(source, body, %{})
+  def post(source, body, headers) do
+    source
+    |> HTTPoison.post(
+         encode_body(headers[:body_type] || headers[:content_type], body),
+         encode_headers(headers)
+       )
+    |> parse
+  end
 
   @doc"""
   Encode the provided hash map for the URL.
@@ -86,12 +89,69 @@ defmodule <%= @project_name_camel_case %>.Api do
       iex> <%= @project_name_camel_case %>.Api.encode_body(%{a: "o ne"})
       "a=o+ne"
 
+      iex> <%= @project_name_camel_case %>.Api.encode_body(nil, %{a: "o ne"})
+      "a=o+ne"
+
+      iex> <%= @project_name_camel_case %>.Api.encode_body("application/x-www-form-urlencoded", %{a: "o ne"})
+      "a=o+ne"
+
+      iex> <%= @project_name_camel_case %>.Api.encode_body("application/json", %{a: "b"})
+      "{\\"a\\":\\"b\\"}"
+
   """
-  def encode_body(map), do: URI.encode_query(map)
+  def encode_body(map), do: encode_body(nil, map)
+  def encode_body(nil, map), do: encode_body("application/x-www-form-urlencoded", map)
+  def encode_body("application/x-www-form-urlencoded", map), do: URI.encode_query(map)
+  def encode_body("application/json", map), do: Poison.encode!(map)
+  def encode_body(_, map), do: encode_body(nil, map)
+
+  @doc"""
+  Build the headers for your API
+
+  ## Examples
+
+      iex> <%= @project_name_camel_case %>.Api.encode_headers(%{content_type: "application/json", bearer: "abc123"})
+      [{"Authorization", "Bearer abc123"}, {"Content-Type", "application/json"}]
+
+      iex> <%= @project_name_camel_case %>.Api.encode_headers(%{bearer: "abc123"})
+      [{"Authorization", "Bearer abc123"}]
+
+      iex> <%= @project_name_camel_case %>.Api.encode_headers(%{})
+      []
+
+      iex> <%= @project_name_camel_case %>.Api.encode_headers()
+      []
+
+      iex> <%= @project_name_camel_case %>.Api.encode_headers(nil)
+      []
+
+  """
+  def encode_headers(), do: encode_headers(%{})
+  def encode_headers(nil), do: encode_headers(%{})
+  def encode_headers(data) do
+    data
+    |> reject_nil
+    |> Enum.map(&header/1)
+    |> Enum.reject(&is_nil/1)
+  end
+  defp header({:bearer, bearer}), do: {"Authorization", "Bearer #{bearer}"}
+  defp header({:content_type, content_type}), do: {"Content-Type", content_type}
+  defp header({:body_type, _}), do: nil
+
+  defp parse({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
+    {:ok, body}
+  end
+  defp parse({:ok, %HTTPoison.Response{status_code: code}}) do
+    {:error, "Expected a 200, received #{code}"}
+  end
+  defp parse({:error, %HTTPoison.Error{reason: reason}}) do
+    {:error, reason}
+  end
 
   defp reject_nil(map) do
     map
     |> Enum.reject(fn{_k,v} -> v == nil end)
     |> Enum.into(%{})
   end
+
 end

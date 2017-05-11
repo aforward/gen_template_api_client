@@ -2,7 +2,8 @@ defmodule <%= @project_name_camel_case %>.Application do
 
   @moduledoc false
 
-  use Application   # See http://elixir-lang.org/docs/stable/elixir/Application.html
+  # See http://elixir-lang.org/docs/stable/elixir/Application.html
+  use Application
 
   def start(_type, _args) do
     import Supervisor.Spec, warn: false

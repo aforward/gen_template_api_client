@@ -5,16 +5,13 @@ defmodule <%= @project_name_camel_case %>.Mixfile do
   @version "0.1.0"
 
   @deps [
-    {:mix_test_watch, github: "aforward/mix-test.watch", only: :dev, runtime: false},
-    {:postgrex, "~> 0.13.2"},
-    {:ecto, "~> 2.1"},
+    {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
     {:poison, "~> 3.1.0"},
-    {:ex_doc, ">= 0.0.0", only: :dev}
+    {:httpoison, "~> 0.11.1"},
+    {:ex_doc, ">= 0.0.0", only: :dev},
   ]
 
   @aliases [
-    "ecto.reset": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate"],
-    "test.once": ["ecto.reset", "test"],
   ]
 
   # ------------------------------------------------------------
