@@ -2,7 +2,7 @@ defmodule GenTemplateApiClient.Mixfile do
   use Mix.Project
 
   @name    :gen_template_api_client
-  @version "0.1.0"
+  @version "0.1.1"
 
   @deps [
     { :mix_templates,  ">0.0.0",  app: false },
@@ -17,7 +17,7 @@ defmodule GenTemplateApiClient.Mixfile do
 
   This will generate templates for get, post functions.  You then
   extend the project with convenience functions to access the API
-  like it were just another Elixir API.
+  like it were just another Elixir lib.
   """
 
   # ------------------------------------------------------------
