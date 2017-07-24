@@ -5,11 +5,11 @@ defmodule <%= @project_name_camel_case %>.Client do
 
   This is where you will want to write your custom
   code to access your API, and it is probably best
-  to make those calls through your Worker.
+  to make those calls through your API or Worker.
 
-    <%= @project_name_camel_case %>.Worker.http/2
-    <%= @project_name_camel_case %>.Worker.get/2
-    <%= @project_name_camel_case %>.Worker.post/3
+    <%= @project_name_camel_case %>.Api.call/2
+    <%= @project_name_camel_case %>.Api.get/2
+    <%= @project_name_camel_case %>.Api.post/3
   """
 
 end
