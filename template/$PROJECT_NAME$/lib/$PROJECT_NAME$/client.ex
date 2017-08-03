@@ -10,6 +10,8 @@ defmodule <%= @project_name_camel_case %>.Client do
     <%= @project_name_camel_case %>.Api.call/2
     <%= @project_name_camel_case %>.Api.get/2
     <%= @project_name_camel_case %>.Api.post/3
+    <%= @project_name_camel_case %>.Api.put/3
+    <%= @project_name_camel_case %>.Api.delete/3
   """
 
 end

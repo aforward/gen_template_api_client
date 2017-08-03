@@ -1,4 +1,6 @@
 defmodule <%= @project_name_camel_case %>.Api do
+  use FnExpr
+
   @moduledoc"""
   Make generic HTTP calls a web service.  Please
   update (or remove) the tests to a sample service
@@ -6,7 +8,7 @@ defmodule <%= @project_name_camel_case %>.Api do
   """
 
   @doc"""
-  Retrieve data from the API using either :get or :post
+  Retrieve data from the API using any method (:get, :post, :put, :delete, etc) available
 
   ## Examples
 
@@ -14,13 +16,12 @@ defmodule <%= @project_name_camel_case %>.Api do
       {:ok, "A text file\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.call(:post, %{source: "https://raw.githubusercontent.com/aforward/webfiles/master/x.txt"})
-      {:error, "Expected a 200, received 400"}
+      {:error, "Expected a 200, received 400\\n400: Invalid request\\n"}
   """
-  def call(:get, %{source: source, headers: headers}), do: get(source, headers)
-  def call(:get, %{source: source}), do: get(source)
-  def call(:post, %{source: source, body: body, headers: headers}), do: post(source, body, headers)
-  def call(:post, %{source: source, body: body}), do: post(source, body)
-  def call(:post, %{source: source}), do: post(source)
+  def call(method, %{source: source, body: body, headers: headers}), do: request(method, source, body, headers)
+  def call(method, %{source: source, body: body}), do: request(method, source, body, %{})
+  def call(method, %{source: source, headers: headers}), do: request(method, source, headers)
+  def call(method, %{source: source}), do: request(method, source, %{})
 
   @doc"""
   Make an API call using GET.  Optionally provide any required headers
@@ -34,18 +35,13 @@ defmodule <%= @project_name_camel_case %>.Api do
       {:ok, "A text file\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.get("https://raw.githubusercontent.com/aforward/webfiles/master/missing.txt")
-      {:error, "Expected a 200, received 404"}
+      {:error, "Expected a 200, received 404\\n404: Not Found\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.get("http://localhost:1")
       {:error, :econnrefused}
 
   """
-  def get(source), do: get(source, nil)
-  def get(source, headers) do
-    source
-    |> HTTPoison.get(encode_headers(headers))
-    |> parse
-  end
+  def get(source, headers \\ %{}), do: request(:get, source, headers)
 
   @doc"""
   Make an API call using POST.  Optionally provide any required data and headers
@@ -55,28 +51,25 @@ defmodule <%= @project_name_camel_case %>.Api do
   ## Examples
 
       iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt")
-      {:error, "Expected a 200, received 400"}
+      {:error, "Expected a 200, received 400\\n400: Invalid request\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt", %{a: "b"})
-      {:error, "Expected a 200, received 400"}
+      {:error, "Expected a 200, received 400\\n400: Invalid request\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.post("https://raw.githubusercontent.com/aforward/webfiles/master/x.txt", %{}, %{body_type: "application/json"})
-      {:error, "Expected a 200, received 400"}
+      {:error, "Expected a 200, received 400\\n400: Invalid request\\n"}
 
       iex> <%= @project_name_camel_case %>.Api.post("http://localhost:1")
       {:error, :econnrefused}
 
   """
-  def post(source), do: post(source, %{}, %{})
-  def post(source, body), do: post(source, body, %{})
-  def post(source, body, headers) do
-    source
-    |> HTTPoison.post(
-         encode_body(headers[:body_type] || headers[:content_type], body),
-         encode_headers(headers)
-       )
-    |> parse
-  end
+  def post(source, body \\ %{}, headers \\ %{}), do: request(:post, source, body, headers)
+
+  @doc"""
+  Make an API call using PUT.  Optionally provide any required data and headers
+  """
+  def put(source, body \\ %{}, headers \\ %{}), do: request(:put, source, body, headers)
+
 
   @doc"""
   Encode the provided hash map for the URL.
@@ -131,6 +124,7 @@ defmodule <%= @project_name_camel_case %>.Api do
   def encode_headers(data) do
     data
     |> reject_nil
+    |> invoke(fn clean_data -> Map.merge(default_headers(), clean_data) end)
     |> Enum.map(&header/1)
     |> Enum.reject(&is_nil/1)
   end
@@ -138,14 +132,32 @@ defmodule <%= @project_name_camel_case %>.Api do
   defp header({:content_type, content_type}), do: {"Content-Type", content_type}
   defp header({:body_type, _}), do: nil
 
-  defp parse({:ok, %HTTPoison.Response{body: body, status_code: 200}}) do
-    {:ok, body}
-  end
-  defp parse({:ok, %HTTPoison.Response{status_code: code}}) do
-    {:error, "Expected a 200, received #{code}"}
+  defp parse({:ok, %HTTPoison.Response{status_code: 200} = resp}), do: parse(resp)
+  defp parse({:ok, %HTTPoison.Response{status_code: 202} = resp}), do: parse(resp)
+  defp parse({:ok, %HTTPoison.Response{status_code: code, body: body}}) do
+    message = body |> String.replace("\\\"", "\"")
+    {:error, "Expected a 200, received #{code}\n#{message}"}
   end
   defp parse({:error, %HTTPoison.Error{reason: reason}}) do
     {:error, reason}
+  end
+  defp parse(%HTTPoison.Response{body: body}), do: {:ok, body}
+
+  defp request(method, source, headers) do
+    source
+    |> invoke(HTTPoison.request(method, &1, "", encode_headers(headers)))
+    |> parse
+  end
+
+  defp request(method, source, body, headers) do
+    source
+    |> invoke(HTTPoison.request(
+         method,
+         &1,
+         encode_body(headers[:body_type] || headers[:content_type], body),
+         encode_headers(headers)
+       ))
+    |> parse
   end
 
   defp reject_nil(map) do
@@ -153,5 +165,18 @@ defmodule <%= @project_name_camel_case %>.Api do
     |> Enum.reject(fn{_k,v} -> v == nil end)
     |> Enum.into(%{})
   end
+
+  @doc"""
+  The default headers that all request should have.  For example,
+
+        bearer: <API TOKEN>
+        content: <mime_type>
+
+  For example,
+
+        %{bearer: Application.get(:<%= @project_name %>, :api_token)
+          content_type: "application/json"}
+  """
+  def default_headers, do: %{}
 
 end
