@@ -2,7 +2,7 @@ defmodule GenTemplateApiClient.Mixfile do
   use Mix.Project
 
   @name    :gen_template_api_client
-  @version "0.1.1"
+  @version "0.2.0"
 
   @deps [
     { :mix_templates,  ">0.0.0",  app: false },
