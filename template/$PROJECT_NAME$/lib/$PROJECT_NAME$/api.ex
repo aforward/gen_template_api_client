@@ -70,6 +70,11 @@ defmodule <%= @project_name_camel_case %>.Api do
   """
   def put(source, body \\ %{}, headers \\ %{}), do: request(:put, source, body, headers)
 
+  @doc"""
+  Make an API call using DELETE.  Optionally provide any required data and headers
+  """
+  def delete(source, body \\ %{}, headers \\ %{}), do: request(:delete, source, body, headers)
+
 
   @doc"""
   Encode the provided hash map for the URL.
