@@ -9,6 +9,7 @@ defmodule <%= @project_name_camel_case %>.Mixfile do
     {:poison, "~> 3.1.0"},
     {:httpoison, "~> 0.11.1"},
     {:fn_expr, "~> 0.2"},
+    {:version_tasks, "~> 0.10"},
     {:ex_doc, ">= 0.0.0", only: :dev},
   ]
 
