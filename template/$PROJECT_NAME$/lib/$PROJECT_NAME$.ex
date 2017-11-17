@@ -17,14 +17,14 @@ defmodule <%= @project_name_camel_case %> do
   Your client wrapper methods should be exposed here, using defdelegate,
   for example
 
-    defdelegate do_something, to: <%= @project_name_camel_case %>.Client
+      defdelegate do_something, to: <%= @project_name_camel_case %>.Client
 
   If you API is not complete, then you would also expose direct access to your
   API, or if you have state information (e.g. OAuth2 tokens), then use the Worker:
 
-      defdelegate call(method, data), to: <%= @project_name_camel_case %>.Api
-      defdelegate post(source, body, headers), to: <%= @project_name_camel_case %>.Api
-      defdelegate get(source, headers), to: <%= @project_name_camel_case %>.Api
+      defdelegate get(url, query_params \\ %{}, headers \\ []), to: <%= @project_name_camel_case %>.Api
+      defdelegate post(url, body \\ nil, headers \\ []), to: <%= @project_name_camel_case %>.Api
+      defdelegate call(url, method, body \\ "", query_params \\ %{}, headers \\ []), to: <%= @project_name_camel_case %>.Api
   """
 
 end
