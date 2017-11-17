@@ -7,7 +7,7 @@ defmodule GenTemplateApiClient.Mixfile do
   @deps [
     { :mix_templates,  ">0.0.0",  app: false },
     { :ex_doc,         ">0.0.0",  only: [:dev, :test] },
-    { :version_tasks,  "~> 0.9.1"},
+    { :version_tasks,  "~> 0.10"},
   ]
 
   @maintainers ["Andrew Forward <aforward@gmail.com>"]
