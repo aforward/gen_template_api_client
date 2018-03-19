@@ -1,1 +1,1 @@
-alias <%= @project_name_camel_case %>.{Worker,Api}
+alias <%= @project_name_camel_case %>.{Api, Client, Worker}

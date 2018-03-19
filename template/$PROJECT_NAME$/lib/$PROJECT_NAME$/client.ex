@@ -1,49 +1,38 @@
 defmodule <%= @project_name_camel_case %>.Client do
+
   @moduledoc"""
-  Access service functionality through Elixir functions,
-  wrapping the underlying HTTP API calls.
+  Helper functions to access the <%= @project_name_camel_case %> API in a
+  more succinct way.  If any features of the API are
+  not directly available here, then consider using
+  the `<%= @project_name_camel_case %>.Api` module directly, or raising a PR
+  to add them to the client.
 
-  This is where you will want to write your custom
-  code to access your API, and it is probably best
-  to make those calls through your API or Worker.
+  All client functions includes a `opts` argument that
+  can accept any lower level options including those
+  for `&<%= @project_name_camel_case %>.Api.request/2`
 
-    <%= @project_name_camel_case %>.Api.call/5
-    <%= @project_name_camel_case %>.Api.get/3
-    <%= @project_name_camel_case %>.Api.post/3
-    <%= @project_name_camel_case %>.Api.put/3
-    <%= @project_name_camel_case %>.Api.delete/3
+  Here is an outline of all the configurations you can set.
 
-  An example is shown based on a
-  https://github.com/work-samples/myserver
+    * `:base`      - The base URL which defaults to `http://localhost:4000/v1`
+    * `:http_opts` - A passthrough map of options to send to HTTP request, more details below
 
-  But should be replace with your actual client calls
+  This client library uses [HTTPoison](https://hex.pm/packages/httpoison)
+  for all HTTP communication, and we will pass through any `:http_opts` you provide,
+  which we have shown below.
+
+    * `:timeout`          - timeout to establish a connection, in milliseconds. Default is 8000
+    * `:recv_timeout`     - timeout used when receiving a connection. Default is 5000
+    * `:stream_to`        - a PID to stream the response to
+    * `:async`            - if given :once, will only stream one message at a time, requires call to stream_next
+    * `:proxy`            - a proxy to be used for the request; it can be a regular url or a {Host, Port} tuple
+    * `:proxy_auth`       - proxy authentication {User, Password} tuple
+    * `:ssl`              - SSL options supported by the ssl erlang module
+    * `:follow_redirect`  - a boolean that causes redirects to be followed
+    * `:max_redirect`     - an integer denoting the maximum number of redirects to follow
+    * `:params`           - an enumerable consisting of two-item tuples that will be appended to the url as query string parameters
+
+  If the above values do not change between calls, then consider configuring
+  them with `Mix.Config` to avoid using them throughout your code.
   """
-
-  @doc"""
-  Extract the profile data for the provided token
-
-  ## Examples
-
-      iex> <%= @project_name_camel_case %>.Client.profile("abc123")
-      {:ok, %{answer: 42}}
-
-      iex> <%= @project_name_camel_case %>.Client.profile("def456")
-      {:error, "Forbidden; No access to this resource"}
-
-      iex> <%= @project_name_camel_case %>.Client.profile("xxx")
-      {:error, "Unauthorized; Invalid credentials"}
-
-  """
-  def profile(token \\ nil) do
-    "/profile"
-    |> <%= @project_name_camel_case %>.Api.get([], [<%= @project_name_camel_case %>.Api.authorization_header(token)])
-    |> (fn
-          {200, answer} -> {:ok, answer}
-          {_, %{error: error, reason: reason}} -> {:error, "#{error}; #{reason}"}
-          {_, reason} -> {:error, reason}
-        end).()
-  end
 
 end
-
-
